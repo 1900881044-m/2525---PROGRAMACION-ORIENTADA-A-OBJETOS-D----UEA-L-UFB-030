@@ -1,0 +1,76 @@
+# Función para ingresar temperaturas diarias
+def ingresar_temperaturas():
+    temperaturas = []  # Lista para almacenar las temperaturas de la semana
+    dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    
+    for dia in dias_semana:
+        while True:
+            try:
+                temp = float(input(f"Ingresa la temperatura del {dia} (°C): "))
+                temperaturas.append(temp)
+                break
+            except ValueError:
+                print("¡Error! Ingresa un número válido.")
+    return temperaturas
+
+# Función para calcular el promedio semanal
+def calcular_promedio(temperaturas):
+    if not temperaturas:
+        return 0
+    return sum(temperaturas) / len(temperaturas)
+
+# Función principal
+def main():
+    print("Registro de Temperaturas Semanales")
+    print("----------------------------------")
+    temps = ingresar_temperaturas()
+    promedio = calcular_promedio(temps)
+    
+    print("\nResumen Semanal:")
+    for i, temp in enumerate(temps):
+        print(f"- {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][i]}: {temp}°C")
+    
+    print(f"\nPromedio Semanal: {promedio:.2f}°C")
+
+if __name__ == "__main__":
+    main()
+class SemanaClima:
+    def __init__(self):
+        self.temperaturas = {}  # Diccionario para guardar temperaturas por día
+        self.dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    
+    # Método para ingresar temperaturas con encapsulamiento
+    def ingresar_temperaturas(self):
+        for dia in self.dias_semana:
+            while True:
+                try:
+                    temp = float(input(f"Ingresa la temperatura del {dia} (°C): "))
+                    self.temperaturas[dia] = temp  # Guarda la temperatura en el diccionario
+                    break
+                except ValueError:
+                    print("¡Error! Ingresa un número válido.")
+    
+    # Método para calcular el promedio (encapsulamiento)
+    def calcular_promedio(self):
+        if not self.temperaturas:
+            return 0
+        return sum(self.temperaturas.values()) / len(self.temperaturas)
+    
+    # Método para mostrar resumen (abstracción)
+    def mostrar_resumen(self):
+        print("\nResumen Semanal:")
+        for dia, temp in self.temperaturas.items():
+            print(f"- {dia}: {temp}°C")
+        print(f"\nPromedio Semanal: {self.calcular_promedio():.2f}°C")
+
+# Clase principal (hereda de SemanaClima si hubiera más funcionalidades)
+class AppClima(SemanaClima):
+    def ejecutar(self):
+        print("Registro de Temperaturas Semanales (POO)")
+        print("----------------------------------------")
+        self.ingresar_temperaturas()
+        self.mostrar_resumen()
+
+if __name__ == "__main__":
+    app = AppClima()
+    app.ejecutar()
