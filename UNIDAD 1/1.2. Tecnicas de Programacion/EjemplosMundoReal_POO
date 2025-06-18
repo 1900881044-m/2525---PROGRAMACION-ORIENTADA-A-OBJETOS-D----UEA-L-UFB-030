@@ -1,138 +1,73 @@
-// EjemploMundoReal_POO/SistemaReservasHotel.java
-
-import java.util.ArrayList;
-import java.util.List;
-
-// Clase principal para ejecutar el sistema
-public class SistemaReservasHotel {
-    public static void main(String[] args) {
-        // Crear un hotel
-        Hotel hotel = new Hotel("Hotel Paradisio");
-
-        // Añadir habitaciones al hotel
-        hotel.agregarHabitacion(new Habitacion(101, "Doble", 150.0));
-        hotel.agregarHabitacion(new Habitacion(102, "Individual", 80.0));
-
-        // Crear huéspedes
-        Huesped huesped1 = new Huesped("Juan Pérez", "juan@email.com");
-        Huesped huesped2 = new Huesped("María López", "maria@email.com");
-
-        // Hacer una reserva
-        hotel.hacerReserva(huesped1, 101, "2023-12-01", "2023-12-05");
-        hotel.hacerReserva(huesped2, 102, "2023-12-10", "2023-12-15");
-
-        // Mostrar reservas
-        hotel.mostrarReservas();
-    }
-}
-
-// Clase Huésped
-class Huesped {
+// Clase que representa un producto en la tienda
+public class Producto {
     private String nombre;
-    private String email;
+    private double precio;
+    private int stock;
 
-    public Huesped(String nombre, String email) {
+    public Producto(String nombre, double precio, int stock) {
         this.nombre = nombre;
-        this.email = email;
+        this.precio = precio;
+        this.stock = stock;
     }
 
-    // Getters
-    public String getNombre() { return nombre; }
-    public String getEmail() { return email; }
-}
-
-// Clase Habitación
-class Habitacion {
-    private int numero;
-    private String tipo;
-    private double precioPorNoche;
-
-    public Habitacion(int numero, String tipo, double precioPorNoche) {
-        this.numero = numero;
-        this.tipo = tipo;
-        this.precioPorNoche = precioPorNoche;
+    public String getNombre() {
+        return nombre;
     }
 
-    // Getters
-    public int getNumero() { return numero; }
-    public String getTipo() { return tipo; }
-    public double getPrecioPorNoche() { return precioPorNoche; }
-}
-
-// Clase Reserva
-class Reserva {
-    private Huesped huesped;
-    private Habitacion habitacion;
-    private String fechaInicio;
-    private String fechaFin;
-
-    public Reserva(Huesped huesped, Habitacion habitacion, String fechaInicio, String fechaFin) {
-        this.huesped = huesped;
-        this.habitacion = habitacion;
-        this.fechaInicio = fechaInicio;
-        this.fechaFin = fechaFin;
+    public double getPrecio() {
+        return precio;
     }
 
-    // Método para mostrar detalles de la reserva
-    public void mostrarDetalles() {
-        System.out.println("Reserva para: " + huesped.getNombre());
-        System.out.println("Habitación: " + habitacion.getNumero() + " (" + habitacion.getTipo() + ")");
-        System.out.println("Fecha: " + fechaInicio + " a " + fechaFin);
-        System.out.println("Precio total: $" + calcularPrecioTotal());
+    public int getStock() {
+        return stock;
     }
 
-    // Calcular precio total (ejemplo simplificado)
-    private double calcularPrecioTotal() {
-        // Supongamos 5 días de estancia (en un caso real, se calcularía con las fechas)
-        return habitacion.getPrecioPorNoche() * 5;
-    }
-}
-
-// Clase Hotel (contiene la lógica principal)
-class Hotel {
-    private String nombre;
-    private List<Habitacion> habitaciones;
-    private List<Reserva> reservas;
-
-    public Hotel(String nombre) {
-        this.nombre = nombre;
-        this.habitaciones = new ArrayList<>();
-        this.reservas = new ArrayList<>();
-    }
-
-    // Método para agregar habitaciones
-    public void agregarHabitacion(Habitacion habitacion) {
-        habitaciones.add(habitacion);
-    }
-
-    // Método para hacer una reserva
-    public void hacerReserva(Huesped huesped, int numeroHabitacion, String fechaInicio, String fechaFin) {
-        Habitacion habitacion = buscarHabitacion(numeroHabitacion);
-        if (habitacion != null) {
-            Reserva reserva = new Reserva(huesped, habitacion, fechaInicio, fechaFin);
-            reservas.add(reserva);
-            System.out.println("¡Reserva exitosa para " + huesped.getNombre() + "!");
+    public void vender(int cantidad) {
+        if (cantidad <= stock) {
+            stock -= cantidad;
+            System.out.println("Venta realizada: " + cantidad + " unidad(es) de " + nombre);
         } else {
-            System.out.println("Habitación no encontrada.");
+            System.out.println("Stock insuficiente para " + nombre);
         }
     }
 
-    // Buscar habitación por número
-    private Habitacion buscarHabitacion(int numero) {
-        for (Habitacion hab : habitaciones) {
-            if (hab.getNumero() == numero) {
-                return hab;
-            }
-        }
-        return null;
+    public void mostrarInfo() {
+        System.out.println("Producto: " + nombre + " | Precio: $" + precio + " | Stock: " + stock);
+    }
+}
+// Clase que representa a un cliente
+public class Cliente {
+    private String nombre;
+
+    public Cliente(String nombre) {
+        this.nombre = nombre;
     }
 
-    // Mostrar todas las reservas
-    public void mostrarReservas() {
-        System.out.println("\n--- Reservas en " + nombre + " ---");
-        for (Reserva reserva : reservas) {
-            reserva.mostrarDetalles();
-            System.out.println("---------------------");
-        }
+    public void comprarProducto(Producto producto, int cantidad) {
+        System.out.println(nombre + " quiere comprar " + cantidad + " unidad(es) de " + producto.getNombre());
+        producto.vender(cantidad);
+    }
+}
+// Clase principal que simula la interacción entre cliente y producto
+public class TiendaVirtual {
+    public static void main(String[] args) {
+        // Crear productos
+        Producto laptop = new Producto("Laptop", 850.00, 5);
+        Producto mouse = new Producto("Mouse", 25.00, 10);
+
+        // Mostrar productos disponibles
+        laptop.mostrarInfo();
+        mouse.mostrarInfo();
+
+        // Crear cliente
+        Cliente cliente1 = new Cliente("Milena");
+
+        // Simular compras
+        cliente1.comprarProducto(laptop, 1);
+        cliente1.comprarProducto(mouse, 3);
+
+        // Mostrar estado actualizado
+        laptop.mostrarInfo();
+        mouse.mostrarInfo();
     }
 }
