@@ -1,0 +1,265 @@
+// Archivo: Dashboard.java
+package com.uea.estudiante.dashboard;
+
+import com.uea.estudiante.modelo.Tarea;
+import com.uea.estudiante.servicio.GestorTareas;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * Clase principal que representa el panel de control para gestión de tareas académicas.
+ * Permite administrar las tareas de las materias de Programación, Sistemas y Física.
+ * @author [Tu Nombre]
+ * @version 1.0
+ */
+public class Dashboard {
+    private static final GestorTareas gestorTareas = new GestorTareas();
+    private static final Scanner scanner = new Scanner(System.in);
+    
+    // Datos del estudiante
+    private static final String UNIVERSIDAD = "Universidad Estatal Amazónica";
+    private static final String[] MATERIAS = {"Programación POO", "Sistemas", "Física"};
+    private static final double[] CALIFICACIONES = {9.0, 10.0, 8.0};
+
+    public static void main(String[] args) {
+        mostrarEncabezado();
+        cargarTareasEjemplo();
+        
+        int opcion;
+        do {
+            mostrarMenuPrincipal();
+            opcion = obtenerOpcion();
+            
+            switch(opcion) {
+                case 1 -> registrarTarea();
+                case 2 -> listarTareas();
+                case 3 -> buscarTareasPorMateria();
+                case 4 -> mostrarProgresoAcademico();
+                case 5 -> System.out.println("\nSaliendo del sistema...");
+                default -> System.out.println("\nOpción no válida. Intente nuevamente.");
+            }
+        } while(opcion != 5);
+        
+        scanner.close();
+    }
+
+    /**
+     * Muestra el encabezado con información del estudiante y universidad.
+     */
+    private static void mostrarEncabezado() {
+        System.out.println("============================================");
+        System.out.println("  SISTEMA DE GESTIÓN ACADÉMICA - " + UNIVERSIDAD);
+        System.out.println("  Estudiante: [Tu Nombre]");
+        System.out.println("  Materias:");
+        System.out.println("  - " + MATERIAS[0] + " (Nota: " + CALIFICACIONES[0] + ")");
+        System.out.println("  - " + MATERIAS[1] + " (Nota: " + CALIFICACIONES[1] + ")");
+        System.out.println("  - " + MATERIAS[2] + " (Nota: " + CALIFICACIONES[2] + ")");
+        System.out.println("============================================\n");
+    }
+
+    /**
+     * Muestra el menú principal de opciones.
+     */
+    private static void mostrarMenuPrincipal() {
+        System.out.println("\n--- MENÚ PRINCIPAL ---");
+        System.out.println("1. Registrar nueva tarea");
+        System.out.println("2. Listar todas las tareas");
+        System.out.println("3. Buscar tareas por materia");
+        System.out.println("4. Ver progreso académico");
+        System.out.println("5. Salir");
+        System.out.print("Seleccione una opción: ");
+    }
+
+    private static int obtenerOpcion() {
+        try {
+            return scanner.nextInt();
+        } finally {
+            scanner.nextLine(); // Limpiar buffer
+        }
+    }
+
+    private static void cargarTareasEjemplo() {
+        gestorTareas.agregarTarea(new Tarea(MATERIAS[0], "Crear proyecto Java con POO", "2023-11-20"));
+        gestorTareas.agregarTarea(new Tarea(MATERIAS[1], "Investigar funciones del PC", "2023-11-15"));
+        gestorTareas.agregarTarea(new Tarea(MATERIAS[2], "Calcular derivadas de movimiento", "2023-11-18"));
+    }
+
+    private static void registrarTarea() {
+        System.out.println("\n--- REGISTRAR NUEVA TAREA ---");
+        
+        System.out.println("Materias disponibles:");
+        for (int i = 0; i < MATERIAS.length; i++) {
+            System.out.println((i+1) + ". " + MATERIAS[i]);
+        }
+        
+        System.out.print("Seleccione materia (1-" + MATERIAS.length + "): ");
+        int materiaIndex = obtenerOpcion() - 1;
+        
+        if (materiaIndex < 0 || materiaIndex >= MATERIAS.length) {
+            System.out.println("Opción no válida");
+            return;
+        }
+        
+        System.out.print("Descripción de la tarea: ");
+        String descripcion = scanner.nextLine();
+        
+        System.out.print("Fecha de entrega (YYYY-MM-DD): ");
+        String fecha = scanner.nextLine();
+        
+        Tarea nuevaTarea = new Tarea(MATERIAS[materiaIndex], descripcion, fecha);
+        gestorTareas.agregarTarea(nuevaTarea);
+        
+        System.out.println("\n¡Tarea registrada con éxito!");
+    }
+
+    private static void listarTareas() {
+        List<Tarea> tareas = gestorTareas.obtenerTodasLasTareas();
+        
+        if (tareas.isEmpty()) {
+            System.out.println("\nNo hay tareas registradas.");
+            return;
+        }
+        
+        System.out.println("\n--- LISTADO DE TAREAS ---");
+        for (int i = 0; i < tareas.size(); i++) {
+            System.out.println((i+1) + ". " + tareas.get(i));
+        }
+    }
+
+    private static void buscarTareasPorMateria() {
+        System.out.println("\n--- BUSCAR TAREAS POR MATERIA ---");
+        System.out.println("Materias disponibles:");
+        for (int i = 0; i < MATERIAS.length; i++) {
+            System.out.println((i+1) + ". " + MATERIAS[i]);
+        }
+        
+        System.out.print("Seleccione materia (1-" + MATERIAS.length + "): ");
+        int materiaIndex = obtenerOpcion() - 1;
+        
+        if (materiaIndex < 0 || materiaIndex >= MATERIAS.length) {
+            System.out.println("Opción no válida");
+            return;
+        }
+        
+        List<Tarea> tareas = gestorTareas.filtrarTareasPorMateria(MATERIAS[materiaIndex]);
+        
+        if (tareas.isEmpty()) {
+            System.out.println("\nNo hay tareas para " + MATERIAS[materiaIndex]);
+            return;
+        }
+        
+        System.out.println("\n--- TAREAS DE " + MATERIAS[materiaIndex].toUpperCase() + " ---");
+        for (int i = 0; i < tareas.size(); i++) {
+            System.out.println((i+1) + ". " + tareas.get(i));
+        }
+    }
+
+    /**
+     * Muestra el progreso académico con las calificaciones actuales.
+     */
+    private static void mostrarProgresoAcademico() {
+        System.out.println("\n--- PROGRESO ACADÉMICO ---");
+        double promedio = 0;
+        
+        for (int i = 0; i < MATERIAS.length; i++) {
+            System.out.printf("%-15s: %.1f%n", MATERIAS[i], CALIFICACIONES[i]);
+            promedio += CALIFICACIONES[i];
+        }
+        
+        promedio /= MATERIAS.length;
+        System.out.println("-----------------------");
+        System.out.printf("Promedio general: %.1f%n", promedio);
+        
+        if (promedio >= 7.0) {
+            System.out.println("¡Buen trabajo! Sigue así.");
+        } else {
+            System.out.println("Ánimo, puedes mejorar.");
+        }
+    }
+}
+
+// Archivo: Tarea.java
+package com.uea.estudiante.modelo;
+
+/**
+ * Clase que representa una tarea académica con sus atributos principales.
+ * Implementa el principio de responsabilidad única (SOLID).
+ */
+public class Tarea {
+    private final String materia;
+    private final String descripcion;
+    private final String fechaEntrega;
+    private boolean completada;
+
+    public Tarea(String materia, String descripcion, String fechaEntrega) {
+        this.materia = materia;
+        this.descripcion = descripcion;
+        this.fechaEntrega = fechaEntrega;
+        this.completada = false;
+    }
+
+    // Getters
+    public String getMateria() { return materia; }
+    public String getDescripcion() { return descripcion; }
+    public String getFechaEntrega() { return fechaEntrega; }
+    public boolean isCompletada() { return completada; }
+
+    // Setters
+    public void setCompletada(boolean completada) { this.completada = completada; }
+
+    @Override
+    public String toString() {
+        return String.format("%s - %s (Entrega: %s) [%s]",
+                materia, descripcion, fechaEntrega,
+                completada ? "COMPLETADA" : "PENDIENTE");
+    }
+}
+
+// Archivo: ITareaServicio.java
+package com.uea.estudiante.servicio;
+
+import com.uea.estudiante.modelo.Tarea;
+import java.util.List;
+
+/**
+ * Interfaz para el servicio de gestión de tareas.
+ * Aplica el principio de segregación de interfaces (SOLID).
+ */
+public interface ITareaServicio {
+    void agregarTarea(Tarea tarea);
+    List<Tarea> obtenerTodasLasTareas();
+    List<Tarea> filtrarTareasPorMateria(String materia);
+}
+
+// Archivo: GestorTareas.java
+package com.uea.estudiante.servicio;
+
+import com.uea.estudiante.modelo.Tarea;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Implementación concreta del servicio de gestión de tareas.
+ * Aplica el principio de inversión de dependencias (SOLID).
+ */
+public class GestorTareas implements ITareaServicio {
+    private final List<Tarea> tareas = new ArrayList<>();
+
+    @Override
+    public void agregarTarea(Tarea tarea) {
+        tareas.add(tarea);
+    }
+
+    @Override
+    public List<Tarea> obtenerTodasLasTareas() {
+        return new ArrayList<>(tareas);
+    }
+
+    @Override
+    public List<Tarea> filtrarTareasPorMateria(String materia) {
+        return tareas.stream()
+                .filter(t -> t.getMateria().equalsIgnoreCase(materia))
+                .collect(Collectors.toList());
+    }
+}
