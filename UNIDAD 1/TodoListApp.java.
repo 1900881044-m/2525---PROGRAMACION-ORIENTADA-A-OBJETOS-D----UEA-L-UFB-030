@@ -1,0 +1,291 @@
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Aplicación GUI de Lista de Tareas (Java Swing)
+ * Un solo archivo: TodoListApp.java
+ *
+ * Funcionalidad:
+ * - Añadir tareas desde JTextField (botón o Enter)
+ * - Marcar como completadas (botón o doble clic)
+ * - Eliminar tareas seleccionadas (botón)
+ * - Visual: tareas completadas aparecen tachadas y con color distinto
+ *
+ * Comentarios están en español para explicar decisiones de diseño y manejo de eventos.
+ */
+public class TodoListApp {
+
+    // Clase interna que representa una tarea.
+    // Separa la lógica (modelo) de la vista (JList) y permite expandir atributos fácilmente.
+    static class Task {
+        private String description;
+        private boolean completed;
+
+        public Task(String description) {
+            this.description = description;
+            this.completed = false;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public boolean isCompleted() {
+            return completed;
+        }
+
+        public void setCompleted(boolean completed) {
+            this.completed = completed;
+        }
+
+        // toString se utiliza por defecto en renderers; aquí devolvemos la descripción simple,
+        // el renderer se encargará de aplicar estilos (tachado/color) cuando corresponda.
+        @Override
+        public String toString() {
+            return description;
+        }
+    }
+
+    // Renderer personalizado para mostrar tareas tachadas cuando están completadas.
+    static class TaskCellRenderer extends JLabel implements ListCellRenderer<Task> {
+
+        public TaskCellRenderer() {
+            setOpaque(true); // necesario para que el color de fondo se pinte
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<? extends Task> list, Task value, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            if (value == null) {
+                setText("");
+                return this;
+            }
+
+            // Usamos HTML para permitir tachado fácil (<s>...</s>) y salto seguro de texto.
+            String text = value.getDescription();
+            if (value.isCompleted()) {
+                setText("<html><s>" + escapeHtml(text) + "</s></html>");
+                setForeground(Color.GRAY);
+            } else {
+                setText(escapeHtml(text));
+                setForeground(Color.BLACK);
+            }
+
+            // Colores de selección
+            if (isSelected) {
+                setBackground(new Color(0xCCE5FF)); // fondo claro al seleccionarse
+            } else {
+                setBackground(Color.WHITE);
+            }
+
+            return this;
+        }
+
+        // Pequeña función para escapar caracteres HTML y evitar problemas si el texto tiene '<' o '&'
+        private String escapeHtml(String s) {
+            if (s == null) return "";
+            return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>");
+        }
+    }
+
+    // Componentes principales de la aplicación
+    private JFrame frame;
+    private DefaultListModel<Task> listModel;
+    private JList<Task> taskList;
+    private JTextField inputField;
+    private JButton addButton;
+    private JButton completeButton;
+    private JButton deleteButton;
+
+    public TodoListApp() {
+        initComponents();
+        layoutComponents();
+        attachHandlers();
+    }
+
+    private void initComponents() {
+        frame = new JFrame("Lista de Tareas - Swing");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(520, 420);
+        frame.setLocationRelativeTo(null); // centra la ventana
+
+        listModel = new DefaultListModel<>();
+        taskList = new JList<>(listModel);
+        taskList.setCellRenderer(new TaskCellRenderer());
+        taskList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        inputField = new JTextField();
+
+        addButton = new JButton("Añadir Tarea");
+        completeButton = new JButton("Marcar como Completada");
+        deleteButton = new JButton("Eliminar Tarea");
+
+        // Atajo de teclado: Suprimir para eliminar
+        // (se añade más abajo en attachHandlers para que el input tenga foco y la lista responda)
+    }
+
+    private void layoutComponents() {
+        JPanel main = new JPanel(new BorderLayout(8, 8));
+        main.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Parte superior: campo de entrada y botón "Añadir"
+        JPanel top = new JPanel(new BorderLayout(6, 6));
+        top.add(inputField, BorderLayout.CENTER);
+        top.add(addButton, BorderLayout.EAST);
+
+        // Centro: lista de tareas en JScrollPane
+        JScrollPane scrollPane = new JScrollPane(taskList);
+
+        // Inferior: botones de acciones
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        bottom.add(completeButton);
+        bottom.add(deleteButton);
+
+        main.add(top, BorderLayout.NORTH);
+        main.add(scrollPane, BorderLayout.CENTER);
+        main.add(bottom, BorderLayout.SOUTH);
+
+        frame.setContentPane(main);
+    }
+
+    private void attachHandlers() {
+        // Acción de añadir tarea desde el botón
+        addButton.addActionListener(e -> addTaskFromInput());
+
+        // También añadimos la acción al presionar Enter en el campo de texto
+        inputField.addActionListener(e -> addTaskFromInput());
+
+        // Botón marcar como completada: alterna el estado "completed" de las tareas seleccionadas
+        completeButton.addActionListener(e -> toggleCompleteSelected());
+
+        // Botón eliminar: elimina las tareas seleccionadas
+        deleteButton.addActionListener(e -> deleteSelectedTasks());
+
+        // Doble clic en elemento de la lista -> alternar completado (mejora opcional)
+        taskList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = taskList.locationToIndex(e.getPoint());
+                    if (index >= 0 && index < listModel.size()) {
+                        Task t = listModel.get(index);
+                        t.setCompleted(!t.isCompleted());
+                        // forzamos repaint del modelo
+                        taskList.repaint();
+                    }
+                }
+            }
+        });
+
+        // Tecla Suprimir (Delete) elimina elementos seleccionados cuando la lista tiene foco
+        taskList.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
+        taskList.getActionMap().put("delete", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteSelectedTasks();
+            }
+        });
+
+        // Habilitar/deshabilitar botones en función de la selección
+        taskList.addListSelectionListener(e -> updateButtonsState());
+        updateButtonsState();
+    }
+
+    // Añade la tarea ingresada en el campo de texto al modelo
+    private void addTaskFromInput() {
+        String text = inputField.getText().trim();
+        if (text.isEmpty()) {
+            // No añadimos tareas vacías; podríamos mostrar un diálogo, pero para simplicidad solo retornamos
+            JOptionPane.showMessageDialog(frame, "Escribe una tarea antes de añadir.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Task newTask = new Task(text);
+        listModel.addElement(newTask);
+        inputField.setText("");
+        inputField.requestFocusInWindow();
+
+        // Seleccionar la tarea recién añadida para feedback visual (opcional)
+        int lastIndex = listModel.size() - 1;
+        taskList.setSelectedIndex(lastIndex);
+        taskList.ensureIndexIsVisible(lastIndex);
+    }
+
+    // Alterna el estado completed de las tareas seleccionadas
+    private void toggleCompleteSelected() {
+        int[] selected = taskList.getSelectedIndices();
+        if (selected.length == 0) {
+            JOptionPane.showMessageDialog(frame, "Selecciona al menos una tarea.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        for (int idx : selected) {
+            if (idx >= 0 && idx < listModel.size()) {
+                Task t = listModel.get(idx);
+                t.setCompleted(!t.isCompleted());
+            }
+        }
+        // Refrescar la vista
+        taskList.repaint();
+    }
+
+    // Elimina las tareas seleccionadas del modelo (hacemos en orden inverso para evitar problemas de índices)
+    private void deleteSelectedTasks() {
+        int[] selected = taskList.getSelectedIndices();
+        if (selected.length == 0) {
+            JOptionPane.showMessageDialog(frame, "Selecciona al menos una tarea para eliminar.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Confirmación rápida antes de eliminar
+        int choice = JOptionPane.showConfirmDialog(frame, "¿Eliminar las tareas seleccionadas?", "Confirmar eliminación",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) return;
+
+        // Eliminar de atrás hacia adelante
+        for (int i = selected.length - 1; i >= 0; i--) {
+            int idx = selected[i];
+            if (idx >= 0 && idx < listModel.size()) {
+                listModel.remove(idx);
+            }
+        }
+    }
+
+    // Actualiza el estado habilitado de los botones según la selección y el contenido del input
+    private void updateButtonsState() {
+        boolean hasSelection = !taskList.isSelectionEmpty();
+        completeButton.setEnabled(hasSelection);
+        deleteButton.setEnabled(hasSelection);
+        addButton.setEnabled(!inputField.getText().trim().isEmpty());
+    }
+
+    public void show() {
+        // Añadimos un DocumentListener para actualizar el estado del botón "Añadir" según el contenido
+        inputField.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { updateButtonsState(); }
+            public void removeUpdate(DocumentEvent e) { updateButtonsState(); }
+            public void changedUpdate(DocumentEvent e) { updateButtonsState(); }
+        });
+
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        // Intentamos aplicar el Look & Feel del sistema para una apariencia más nativa
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
+
+        SwingUtilities.invokeLater(() -> {
+            TodoListApp app = new TodoListApp();
+            app.show();
+        });
+    }
+}
